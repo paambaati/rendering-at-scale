@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+		<meta name="author" content="GP<gp@indix.com>"/>
+		<title>Rendering @ Scale with Chrome Debugging Protocol | Indix&trade;</title>
+		<link rel="stylesheet" href="css/reveal.css"/>
+		<link rel="stylesheet" href="css/theme/gp.css"/>
+		<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-indix.png">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<!-- Slide 1 - Title card -->
+				<section data-background-color="#6300C8">
+					<img src="img/chrome_sublime.png" class="cover" />
+					<h1 class="caps">
+						<span class="chromatic-aberration">Rendering</span> <small class="small-caps italic">at</small> <span class="bold">Scale</span>
+					</h1>
+					<h3>with Chrome Debugging Protocol</h3>
+				</section>
+				<!--- Slide 2 - Author intro -->
+				<section data-slide-type="author" data-background-color="#414141">
+					<h2>About Me</h2>
+					<img data-src="img/me.jpg" class="avatar"/>
+					<h1 class="bold">GP</h1>
+					<p>Principal Engineer, <span class="red"><b>Indix</b>&trade;</span></p>
+					<p>
+						<small>
+							<img data-src="img/github-logo.svg" class="brand-icon"/>paambaati
+							 &nbsp;&nbsp;&nbsp;&nbsp; 
+							<img data-src="img/twitter-logo.svg" class="brand-icon"/>@thundubeedi
+						</small>
+					</p>
+					<div class="text-animation-wrapper">
+						<p class="text-animation"></p>
+					</div>
+				</section>
+				<!-- Slide 3 - Introduction to rendering -->
+				<section data-background-color="#61BC88">
+					<!-- Slide 3.1 - What is rendering? -->
+					<section>
+						<h1 class="bold">Rendering 101</h1>
+						<p>Rendering is what a browser does to display contents of a webpage.</p>
+						<p class="spacer"/>
+						<p>Rendered webpage's source HTML is our target.</p>
+					</section>
+					<!-- Slide 3.2 - Differences with crawling. -->
+					<section>
+						<h2 class="bold">Isn't that called "crawling"?</h2>
+						<p>Yes <em>and</em> no.</p>
+						<p class="spacer"/>
+						<p>Crawling is fetching simple webpages, and doesn't work with SPAs, PWAs and webpages that use Ajax to lazily load data.</p>
+						<p class="spacer"/>
+						<p>Rendering is intelligently fetching the page source for <em>any</em> kind of webpage.</p>
+					</section>
+					<!-- Slide 3.3 - Why render? -->
+					<section>
+						<h2 class="bold">Why do we need this?</h2>
+						<p>Webpages are <u>one</u> of our many sources of product information.</p>
+						<p class="spacer"/>
+						<p>Indix has more than <span class="bold">⚡️1 billion</span> products across 62K brands from 2400 websites, and is tracking &amp; discovering more every <em>second</em>.</p>
+					</section>
+				</section>
+				<!-- Slide 4 - Current/Past real-world challenges -->
+				<section data-background-color="#8D6E63">
+					<h1 class="bold">Real-world challenges</h1>
+					<p>
+						<ul>
+							<li>Evolution of JavaScript frameworks and client-side rendering.</li>
+							<li>Geo-blocking.</li>
+							<!--li>CAPTCHA.</li-->
+							<li>🤖 Bot detection &amp; mitigation services (Distil, Cloudflare Webapp Firewall, Akamai Bot Manager, ShieldSquare, etc).</li>
+						</ul>
+					</p>
+					<p class="spacer"/>
+					<small><em>*wipes sweat from forehead*</em></small>
+				</section>
+				<!-- Slide 5 - CDP -->
+				<section data-background-color="#F07268">
+					<!-- Slide 5.1 - What is CDP? -->
+					<section>
+						<h1 class="bold">Say hi to CDP!</h1>
+						<p><u>C</u>hrome <u>D</u>ebugging <u>P</u>rotocol is a set of APIs you can use to programatically control Chrome.</p>
+						<p class="spacer"/>
+						<p>Effort is underway to standardize CDP API across all browsers (see RemoteDebug project).</p>
+						<p class="spacer"/>
+						<p>It was originally built alongside "headless" mode for making automation testing easier.</p>
+					</section>
+					<!-- Slide 5.2 - What about the competition? -->
+					<section>
+						<h2 class="bold">Wait, what about Selenium, PhantomJS &amp; Nightmare.js?</h2>
+						<p>They're all too big, too slow, require a dummy display driver and/or don't have low-level network APIs for our usecase.</p>
+						<p class="spacer"/>
+						<p>☠️ PhantomJS is no longer actively maintained after headless Chrome came out.</p>
+					</section>
+					<!-- Slide 5.3 - Capabilities -->
+					<section>
+						<h2 class="bold">What can CDP do?</h2>
+						<p>CDP exposes a remote debugging port, to which you can connect and start sending commands. Some of the cool things you can do include &mdash;</p>
+						<ul>
+							<li>Track all requests on the page, and intercept/modify them.</li>
+							<li>Execute custom JavaScript.</li>
+							<li>Get page metrics like first meaningful paint, page load time, etc.</li>
+							<li>Generate screenshots or PDFs.</li>
+							<li>Auto-fill &amp; submit forms.</li>
+							<li>Emulate interactions like scrolls, clicks and touch gestures.</li>
+						</ul>
+					</section>
+					<!-- Slide 5.4 - Clients -->
+					<section>
+						<h2 class="bold">Clients out in the wild</h2>
+						<p>Interest in CDP has shot through the roof in the past few months, and so there are a lot of new clients on top of the protocol.</p>
+						<table>
+							<thead>
+								<tr>
+									<th>Client</th>
+									<th>Language</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Puppeteer<sup>*</sup></td>
+									<td>Node.js</td>
+								</tr>
+								<tr>
+									<td>Navalia</td>
+									<td>Node.js</td>
+								</tr>
+								<tr>
+									<td>gcd</td>
+									<td>Golang</td>
+								</tr>
+								<tr>
+									<td>PyChromeDevTools</td>
+									<td>Python</td>
+								</tr>
+								<tr>
+									<td>cdp4j</td>
+									<td>Java</td>
+								</tr>
+								<tr>
+									<td>chrome-reactive-kotlin</td>
+									<td>Kotlin</td>
+								</tr>
+							</tbody>
+						</table>
+						<p class="spacer"/>
+						<small><sup>*</sup> Maintained by the Google Chrome team.</small>
+					</section>
+					<!-- Slide 5.5 - WE WERE FIRST! -->
+					<section>
+						<h2 class="bold">Meanwhile at Indix&hellip;</h2>
+						<p class="spacer"/>
+						<p>
+							<img data-src="img/superstar.gif"/>
+						</p>
+					</section>
+				</section>
+				<!-- Slide 6 - Shadowfax -->
+				<section data-background-color="#5E9AC0">
+					<!-- Slide 6.1 - What is Shadowfax? -->
+					<section>
+						<h1 class="bold">🐎 Shadowfax</h1>
+						<p>... is our in-house rendering engine for Ajax-based sites, built on top of CDP.</p>
+						<p class="spacer"/>
+						<p>Shadowfax is an NPM module, and predates the Chrome team's Puppeteer &amp; Rendertron projects by months. It started as an experiment on the then-new headless mode.</p>
+					</section>
+					<!-- Slide 6.2 - How does Shadowfax work? -->
+					<section>
+						<h2 class="bold">How it works</h2>
+						<p>
+							<ol>
+								<li>Establish connection to Chrome's remote debugging socket.</li>
+								<li>Open new tab with <code>createTarget()</code> command.</li>
+								<li>Send <code>navigate(url)</code> command to navigate to given URL.</li>
+								<li>Start listening for <code>requestWillBeSent</code> events.</li>
+								<li>Watch requests until they become idle.</li>
+								<li>Execute <code>document.documentElement.outerHTML</code> with <code>Runtime.evaluate()</code> to get full HTML source.</li>
+								<li>Remove event listeners &amp; close tab with <code>closeTarget()</code> command.</li>
+								<li>Return HTML.</li>
+							</ol>
+						</p>
+					</section>
+					<!-- Slide 6.3 - Scaling approach #1 -->
+					<section>
+						<h2 class="bold">Scaling Shadowfax</h2>
+						<p class="caps">Approach #1</p>
+						<p>(Shadowfax + Background Chrome) + Docker + Mesos = 🙁</p>
+						<p class="spacer"/>
+						<p class="caps">What happened</p>
+						<ul>
+							<li>Chrome would frequently segfault.</li>
+						</ul>
+					</section>
+					<!-- Slide 6.4 - Scaling approach #2 -->
+					<section>
+						<h2 class="bold">Scaling Shadowfax</h2>
+						<p class="caps">Approach #2</p>
+						<p>Shadowfax + Docker + Chrome As A Service + Mesos = 🙁</p>
+						<p class="spacer"/>
+						<p class="caps">What happened</p>
+						<ul>
+							<li>Chrome's CPU usage would climb up, eventually leading to CPU soft-lockups.</li>
+							<li>Chrome would frequently segfault.</li>
+						</ul>
+					</section>
+					<!-- Slide 6.5 - Scaling approach #4961 -->
+					<section>
+						<h2 class="bold">Scaling Shadowfax</h2>
+						<p class="caps">Approach #4961</p>
+						<p>Shadowfax + On-Demand Chrome + Mesos = 😎</p>
+						<p class="spacer"/>
+						<p class="caps">What we learned</p>
+						<ul>
+							<li>Chrome is incredibly unstable when run inside Docker.</li>
+							<li>Background Chrome slowly eats up RAM &amp; CPU.</li>
+							<li>Launching Chrome for each request was better for overall stability; we could live with the additional delay (~ 700 ms).</li>
+						</ul>
+					</section>
+					<!-- Slide 6.6 - Final architecture -->
+					<section data-background-color="#D7DBDC">
+						<h2 class="bold black">Shadowfax Architecture</h2>
+						<p class="spacer"/>
+						<p>
+							<img class="no-border" data-src="img/architecture.svg"/>
+						</p>
+					</section>
+					<!-- Slide 6.7 - Show off Android POC -->
+					<section data-background-color="#5E9AC0">
+						<h2 class="bold">Look ma, no computer!</h2>
+						<video controls src="video/shadowfax-android.mp4" type="video/mp4" class="stretch"/>
+					</section>
+				</section>
+				<!-- Slide 7 - Benchmarks/Comparison -->
+				<section data-background-color="#F19B2C">
+					<!-- Slide 7.1 - Response Time comparsion -->
+					<section>
+						<h1 class="bold">🏋🏻‍️ Benchmarks</h1>
+						<h3 class="bold">Response Time (Flipkart)</h3>
+						<h4><code>4x</code> over PhantomJS, <code>3x</code> over Nightmare.js</h4>
+						<canvas data-chart="bar">
+						<!-- 
+						{
+						 "data": {
+						  "labels": ["Average Response Time (in seconds)"],
+						  "datasets": [
+						   {
+						    "data":[40],
+						    "label":"👻 PhantomJS","backgroundColor":"#1DE9B6"
+						   },
+						   {
+						    "data":[32],
+						    "label":"🌑 Nightmare.js","backgroundColor":"#FF3D00"
+						   },
+						   {
+						    "data":[11],
+						    "label":"🐎 Shadowfax","backgroundColor":"#3D5AFE"
+						   }
+						  ]
+						 }, 
+						 "options": {
+						 	"responsive": "true",
+						 	"scales": {"yAxes": [{"ticks": {"beginAtZero": "true"}}]}
+						 }
+						}
+						-->
+						</canvas>
+					</section>
+					<!-- Slide 7.2 - Memory usage comparsion -->
+					<section>
+						<h3 class="bold">RAM Usage (Cold Start)</h3>
+						<h4><code>2x</code> over PhantomJS &amp; Nightmare.js</h4>
+						<canvas data-chart="bar">
+						<!-- 
+						{
+						 "data": {
+						  "labels": ["Average RAM Usage (in MB)"],
+						  "datasets": [
+						   {
+						    "data":[156],
+						    "label":"👻 PhantomJS","backgroundColor":"#1DE9B6"
+						   },
+						   {
+						    "data":[143],
+						    "label":"🌑 Nightmare.js","backgroundColor":"#FF3D00"
+						   },
+						   {
+						    "data":[83],
+						    "label":"🐎 Shadowfax","backgroundColor":"#3D5AFE"
+						   }
+						  ]
+						 }, 
+						 "options": {
+						 	"responsive": "true",
+						 	"scales": {"yAxes": [{"ticks": {"beginAtZero": "true"}}]}
+						 }
+						}
+						-->
+						</canvas>
+					</section>
+				</section>
+				<!-- Slide 8 - Thank you! -->
+				<section data-background-color="#000000">
+					<h1 class="bold">Thanks 🙏🏼</h1>
+					<h2 class="red">
+						<img data-src="img/indix-logo.png" class="no-border brand-logo-indix"/>com/join-us
+					</h2>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			Reveal.initialize({
+				history: true,
+				dependencies: [
+					{ src: 'plugin/chart/Chart.min.js' },
+					{ src: 'plugin/chart/csv2chart.js' },
+				],
+				chart: {
+					defaults: {
+						global: {
+							defaultFontFamily: "'Product Sans'",
+							defaultFontSize: 18,
+							defaultFontColor: '#EEEEEE',
+							layout: {
+								padding: {
+									top: 10,
+									bottom: 10
+								}
+							},
+							legend: {
+								labels: {
+									padding: 20
+								}
+							},
+							devicePixelRatio: 2,
+							scales: {
+								xAxes: [{
+									ticks: {
+										beginAtZero: true
+									}
+								}]
+							},
+							animation: {
+								duration: 500,
+								easing: 'linear'
+							}
+						}
+					}
+				}
+			});
+		</script>
+		<script src="lib/js/text-animation.js"></script>
+	</body>
+</html>
